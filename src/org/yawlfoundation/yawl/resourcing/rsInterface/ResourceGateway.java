@@ -18,6 +18,8 @@
 
 package org.yawlfoundation.yawl.resourcing.rsInterface;
 
+
+import org.json.JSONArray;
 import org.apache.log4j.Logger;
 import org.yawlfoundation.yawl.engine.interfce.ServletUtils;
 import org.yawlfoundation.yawl.resourcing.datastore.eventlog.EventLogger;
@@ -36,7 +38,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 
@@ -181,7 +186,7 @@ public class ResourceGateway extends HttpServlet {
 
        String result = "";
 
-       String action = req.getParameter("action");
+       String action = req.getParameter("action"); 
        String handle = req.getParameter("sessionHandle");
 
        if (action == null) {
@@ -200,8 +205,23 @@ public class ResourceGateway extends HttpServlet {
            int interval = req.getSession().getMaxInactiveInterval();
            result = _rm.serviceConnect(userid, password, interval);
        }
+      
        else if (action.equalsIgnoreCase("checkConnection")) {
             result = String.valueOf(_rm.checkServiceConnection(handle)) ;
+       }
+       else if (action.equalsIgnoreCase("connectRoles")) { // 返回json格式的roles对象 添加时间2016/12/13
+    	   HashSet<Role> roleSet = getOrgDataSet().getRoles();
+    	   String value="{";
+    	   JSONArray json=new JSONArray();
+    	   if (roleSet!=null) {
+    		  for ( Role role : roleSet) {
+    			  Map<String,String> mapString = new HashMap<String,String>();
+    			  mapString.put("roleName", role.getName()); 
+    			  json.put(mapString);
+    		  }
+    	   }
+    	   value+=arrayJsonPair("roles", json);
+    	   result = value+"}";
        }
        else if (_rm.checkServiceConnection(handle)) {
            if (action.startsWith("get")) {
@@ -257,7 +277,7 @@ public class ResourceGateway extends HttpServlet {
     }
 
 
-    public String doAddResourceAction(HttpServletRequest req, String action) {
+    public String doAddResourceAction(HttpServletRequest req, String action) throws UnsupportedEncodingException {
         String result = "";
         if (action.equalsIgnoreCase("addParticipant")) {
             String userid = req.getParameter("userid");
@@ -308,7 +328,8 @@ public class ResourceGateway extends HttpServlet {
             else result = fail("Add", "Capability", name);
         }
         else if (action.equalsIgnoreCase("addRole")) {
-            String name = req.getParameter("name");
+            byte[] namebyte = req.getParameter("name").getBytes("gb2312"); // 中文乱码
+			String name = namebyte.toString();
             if ((name != null) && (! getOrgDataSet().isKnownRoleName(name))) {
                 Role role = new Role(name);
                 updateCommonFields(role, req);
@@ -1070,6 +1091,8 @@ public class ResourceGateway extends HttpServlet {
     }
 
 
+
+
     private String stringSetToJSON(Collection<String> set, String callback) {
         String s = "{";
         if (set != null) {
@@ -1087,6 +1110,9 @@ public class ResourceGateway extends HttpServlet {
         return String.format("\"%s\":\"%s\"", key, value);
     }
 
+    private String arrayJsonPair(String key, JSONArray value) {
+        return String.format("\"%s\":%s", key, value);
+    }
 
     private long debug(long start, String... msgs) {
         long now = System.currentTimeMillis();
