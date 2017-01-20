@@ -209,20 +209,6 @@ public class ResourceGateway extends HttpServlet {
        else if (action.equalsIgnoreCase("checkConnection")) {
             result = String.valueOf(_rm.checkServiceConnection(handle)) ;
        }
-       else if (action.equalsIgnoreCase("connectRoles")) { // 返回json格式的roles对象 添加时间2016/12/13
-    	   HashSet<Role> roleSet = getOrgDataSet().getRoles();
-    	   String value="{";
-    	   JSONArray json=new JSONArray();
-    	   if (roleSet!=null) {
-    		  for ( Role role : roleSet) {
-    			  Map<String,String> mapString = new HashMap<String,String>();
-    			  mapString.put("roleName", role.getName()); 
-    			  json.put(mapString);
-    		  }
-    	   }
-    	   value+=arrayJsonPair("roles", json);
-    	   result = value+"}";
-       }
        else if (_rm.checkServiceConnection(handle)) {
            if (action.startsWith("get")) {
                result = doGetResourceAction(req, action);
