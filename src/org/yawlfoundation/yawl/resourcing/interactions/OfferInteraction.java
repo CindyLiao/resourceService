@@ -18,6 +18,8 @@
 
 package org.yawlfoundation.yawl.resourcing.interactions;
 
+import net.sf.json.JSONObject;
+
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -26,10 +28,12 @@ import org.yawlfoundation.yawl.resourcing.ResourceManager;
 import org.yawlfoundation.yawl.resourcing.WorkQueue;
 import org.yawlfoundation.yawl.resourcing.constraints.AbstractConstraint;
 import org.yawlfoundation.yawl.resourcing.constraints.ConstraintFactory;
+import org.yawlfoundation.yawl.resourcing.datastore.orgdata.GetOrganPosByBusiRole;
 import org.yawlfoundation.yawl.resourcing.filters.AbstractFilter;
 import org.yawlfoundation.yawl.resourcing.filters.FilterFactory;
 import org.yawlfoundation.yawl.resourcing.resource.Participant;
 import org.yawlfoundation.yawl.resourcing.resource.Role;
+import org.yawlfoundation.yawl.resourcing.util.HttpRequestUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,7 +93,7 @@ public class OfferInteraction extends AbstractInteraction {
     /**
      * Adds a participant to the initial distribution list
      * @param id - the id of the participant
-     */
+     */ 
     public void addParticipant(String id) {
         Participant p = _rm.getOrgDataSet().getParticipant(id);
         if (p != null)
@@ -134,11 +138,17 @@ public class OfferInteraction extends AbstractInteraction {
 
 
     public void addRole(String rid) {
-        Role r = _rm.getOrgDataSet().getRole(rid);  
+        Role r = _rm.getOrgDataSet().getRole(rid);  // 
         if (r != null)
             _roles.add(r);
-        else
-            _log.warn("Unknown Role ID in Offer spec: " + rid);
+        else {
+        	// external source , get organRoleId from mapping center by busiRoleId(rid)
+        	
+        	 _log.warn("Unknown Role ID in Offer spec: " + rid);
+        	
+        }
+        	
+           
     }
 
     public void addRoleUnchecked(String rid) {
@@ -243,7 +253,7 @@ public class OfferInteraction extends AbstractInteraction {
      */
     public Set<Participant> performOffer(WorkItemRecord wir) {
         _distributionSet = new HashSet<Participant>();
-
+        GetOrganPosByBusiRole _organPos = new GetOrganPosByBusiRole();
         // if familiar task specified, get the participant(s) who completed that task,
         // & offer this item to them - no more to do
         if (_familiarParticipantTask != null) {
@@ -259,7 +269,13 @@ public class OfferInteraction extends AbstractInteraction {
                 uniqueIDs.add(p.getID()) ;
                 _distributionSet.add(p) ;
             }
-
+            
+            // 业务角色 -》转换至组织角色-》对应的员工编号获取
+            List<String> empIdList =  _organPos.getParticipantsId( wir,_roles); // mapping
+            for ( String s: empIdList ) {
+            	Participant p = _rm.getOrgDataSet().getParticipant(s);
+            	addParticipantToDistributionSet(_distributionSet, uniqueIDs, p);
+            }
             // add roles
             for (Role role : _roles) {
                 Set<Participant> pSet = _rm.getOrgDataSet().castToParticipantSet(role.getResources());
@@ -267,6 +283,7 @@ public class OfferInteraction extends AbstractInteraction {
                 for (Participant p : pSet) {
                     addParticipantToDistributionSet(_distributionSet, uniqueIDs, p) ;
                 }
+                
             }
 
             // add dynamic params

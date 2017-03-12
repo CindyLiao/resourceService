@@ -101,6 +101,7 @@
         </description>
     </context-param>
 
+ <!--
     <context-param>
 	    <param-name>OrgDataSource</param-name>
     	<param-value>HibernateImpl</param-value>
@@ -111,10 +112,24 @@
             'HibernateImpl' class.
         </description>
     </context-param>
+        -->
+    
+    <context-param>
+	    <param-name>OrgDataSource</param-name>
+    	<param-value>ExternalSource</param-value>
+    	<description>
+    		The name of the class (an extension of 'DataSource') which is used to
+            as the 'data translation layer' between the ResourceService and a source
+            of organisational data. Use'ExternalSource' class to load datasource from
+            external sysytem.
+        </description>
+    </context-param>
+ 	
 
     <context-param>
 	    <param-name>ExternalUserAuthentication</param-name>
-    	<param-value>false</param-value>
+    	<!-- <param-value>false</param-value> -->
+    	<param-value>true</param-value>
     	<description>
             When set to false (the default), user passwords are encrypted and stored
             within each user record, and authentication is handled within the

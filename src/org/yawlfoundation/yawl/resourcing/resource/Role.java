@@ -122,15 +122,7 @@ public class Role extends AbstractResourceAttribute implements Comparable {
 
     public void set_belongsToID(String belongsToID) { _belongsToID = belongsToID; }
     
-    /**
-     * @param Brole the business role 
-     * @return the participant belong to the role 
-     */
-    public Set<Participant> getParticpantByRole(String Brole){
-    	RoleMapping rm=new RoleMapping();
-    	Set<String> ORoleSet=rm.getOrganizeRole(Brole);
-    	
-    	return null;
-    }
+  
+   
 
 }
